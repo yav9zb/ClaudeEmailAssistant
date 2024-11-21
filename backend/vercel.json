@@ -2,12 +2,16 @@
     "version": 2,
     "routes": [
       {
-        "src": "/",
-        "dest": "/api/generate.js"
-      },
-      {
-        "src": "/api/generate",
-        "dest": "/api/generate.js"
+        "src": "/api/(.*)",
+        "dest": "/api/$1.js",
+        "continue": true
       }
-    ]
+    ],
+    "functions": {
+      "api/**/*.js": {
+        "memory": 1024,
+        "maxDuration": 10
+      }
+    },
+    "public": true
   }
