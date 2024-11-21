@@ -1,5 +1,5 @@
 {
-    "name": "claude-email-assistant-api",
+    "name": "claude-email-assistant",
     "version": "1.0.0",
     "private": true,
     "type": "module",
