@@ -37,10 +37,10 @@ app.post('/api/generate', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2024-10-22'
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
+        model: "claude-3-5-haiku-20241022",
         max_tokens: 1024,
         messages: [{
           role: 'user',
