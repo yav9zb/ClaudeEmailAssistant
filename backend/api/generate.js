@@ -1,7 +1,19 @@
 import { rateLimit } from '../middleware/rateLimit';
 import { anthropic } from '../lib/anthropic';
 
-const handler = async (req, res) => {
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -31,7 +43,6 @@ const handler = async (req, res) => {
             </originalEmail>
 
             Your task is to draft a courteous and appropriate response to this email. Follow these guidelines:
-
             1. Begin by addressing the sender by name. The sender's name is ${senderName}.
             2. In the first paragraph, acknowledge receipt of their email and briefly mention the main topic they addressed.
             3. In the subsequent paragraphs, address each point or question raised in the original email.
@@ -51,6 +62,4 @@ const handler = async (req, res) => {
     console.error('API error:', error);
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
-};
-
-export default handler;
+}
