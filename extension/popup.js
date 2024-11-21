@@ -18,7 +18,7 @@ chrome.storage.sync.get(['claudeApiKey'], (result) => {
 });
 
 async function generateResponse(emailContent) {
-  const response = await fetch('https://your-backend.com/generate-response', {
+  const response = await fetch('http://localhost:3000/generate-response', {
     method: 'POST',
     body: JSON.stringify({ email: emailContent })
   });

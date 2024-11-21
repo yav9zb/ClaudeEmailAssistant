@@ -1,6 +1,47 @@
 // content.js
 let buttonInjected = false;
 
+function injectReplyButton() {
+  // Target the Gmail reply area more specifically
+  const replyContainer = document.querySelector('div[role="button"][data-tooltip="Reply"]')?.parentElement;
+  if (!replyContainer || buttonInjected) return;
+
+  const assistButton = document.createElement('div');
+  assistButton.innerHTML = `
+    <div role="button" class="T-I J-J5-Ji aoO T-I-atl" 
+         style="background: #1a73e8; color: white; margin-right: 8px;">
+      Claude Assistant
+    </div>`;
+  
+  assistButton.onclick = handleClick;
+  replyContainer.prepend(assistButton);
+  buttonInjected = true;
+  console.log('Button injected successfully');
+}
+
+async function handleClick() {
+  try {
+    // Find compose area after clicking reply
+    const replyButton = document.querySelector('div[role="button"][data-tooltip="Reply"]');
+    replyButton.click();
+    
+    // Wait for compose area to appear
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const composeArea = document.querySelector('div[role="textbox"][aria-label="Message Body"]');
+    if (!composeArea) {
+      throw new Error('Could not find compose area');
+    }
+
+    const { subject, emailBody } = await getEmailContent();
+    const response = await generateResponse(subject, emailBody);
+    composeArea.innerHTML = formatResponse(response);
+  } catch (error) {
+    console.error('Error:', error);
+    showError('Failed to generate response');
+  }
+}
+
 async function getEmailContent() {
   try {
     const emailBody = document.querySelector('.a3s.aiL')?.innerText;
@@ -10,50 +51,6 @@ async function getEmailContent() {
   } catch (error) {
     console.error('Error getting email content:', error);
     throw error;
-  }
-}
-
-function injectReplyButton() {
-  if (buttonInjected) return;
-  
-  const replyContainer = document.querySelector('.ams.bkH');
-  if (!replyContainer) return;
-
-  const assistButton = document.createElement('div');
-  assistButton.innerHTML = `
-    <div class="T-I J-J5-Ji aoO T-I-atl L3" 
-         style="background-color: #1a73e8; margin-right: 8px;">
-      <span class="button-text">Claude Assistant</span>
-      <div class="loading-spinner" style="display: none;"></div>
-    </div>`;
-  
-  assistButton.onclick = handleClick;
-  replyContainer.prepend(assistButton);
-  buttonInjected = true;
-}
-
-async function handleClick() {
-  const button = this.querySelector('.T-I');
-  const spinner = this.querySelector('.loading-spinner');
-  const buttonText = this.querySelector('.button-text');
-  
-  try {
-    button.style.opacity = '0.7';
-    spinner.style.display = 'block';
-    buttonText.textContent = 'Generating...';
-    
-    const { subject, emailBody } = await getEmailContent();
-    const response = await generateResponse(subject, emailBody);
-    
-    const replyBox = document.querySelector('[role="textbox"]');
-    if (replyBox) replyBox.innerHTML = formatResponse(response);
-  } catch (error) {
-    console.error('Error:', error);
-    showError('Failed to generate response');
-  } finally {
-    button.style.opacity = '1';
-    spinner.style.display = 'none';
-    buttonText.textContent = 'Claude Assistant';
   }
 }
 
@@ -88,11 +85,22 @@ async function generateResponse(subject, emailBody) {
 }
 
 // Optimized observer with debouncing
-const observer = new MutationObserver(_.debounce(() => {
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+const observer = new MutationObserver(debounce(() => {
   if (!buttonInjected) injectReplyButton();
 }, 250));
 
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
-});
+// Check for button injection every 2 seconds until successful
+const checkInterval = setInterval(() => {
+  if (document.querySelector('div[role="button"][data-tooltip="Reply"]')) {
+    injectReplyButton();
+    if (buttonInjected) clearInterval(checkInterval);
+  }
+}, 2000);

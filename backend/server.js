@@ -14,6 +14,10 @@ app.use(limiter);
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+    res.send('Gmail Assistant API is running');
+  });
+
 // Validate environment variables
 if (!process.env.CLAUDE_API_KEY) {
   console.error('CLAUDE_API_KEY is required');
