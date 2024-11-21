@@ -23,7 +23,7 @@ async function generateResponse(emailContent, senderName, recipientName) {
     throw new Error('API key not configured. Please set it in extension settings.');
   }
 
-  const response = await fetch('http://localhost:3000/api/generate', {
+  const response = await fetch('https://claude-email-assistant.vercel.app/api/generate', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
