@@ -17,10 +17,29 @@ chrome.storage.sync.get(['claudeApiKey'], (result) => {
   }
 });
 
-async function generateResponse(emailContent) {
-  const response = await fetch('http://localhost:3000/generate-response', {
+async function generateResponse(emailContent, senderName, recipientName) {
+  const apiKey = await chrome.storage.sync.get(['claudeApiKey']);
+  if (!apiKey.claudeApiKey) {
+    throw new Error('API key not configured. Please set it in extension settings.');
+  }
+
+  const response = await fetch('http://localhost:3000/api/generate', {
     method: 'POST',
-    body: JSON.stringify({ email: emailContent })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey.claudeApiKey}`, // Added auth header if necessary
+    },
+    body: JSON.stringify({
+      emailContent,
+      senderName,
+      recipientName,
+    }),
   });
+
+  if (!response.ok) {
+    const errorDetails = await response.text();
+    throw new Error(`Failed to generate response: ${errorDetails}`);
+  }
+
   return response.json();
 }

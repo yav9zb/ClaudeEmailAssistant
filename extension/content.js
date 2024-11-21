@@ -1,12 +1,12 @@
-// content.js
 let buttonInjected = false;
 
 function injectReplyButton() {
   // Target the Gmail reply area more specifically
   const replyContainer = document.querySelector('div[role="button"][data-tooltip="Reply"]')?.parentElement;
-  if (!replyContainer || buttonInjected) return;
+  if (!replyContainer || replyContainer.querySelector('.Claude-Assistant-Button')) return;
 
   const assistButton = document.createElement('div');
+  assistButton.classList.add('Claude-Assistant-Button');
   assistButton.innerHTML = `
     <div role="button" class="T-I J-J5-Ji aoO T-I-atl" 
          style="background: #1a73e8; color: white; margin-right: 8px;">
@@ -33,8 +33,14 @@ async function handleClick() {
       throw new Error('Could not find compose area');
     }
 
-    const { subject, emailBody } = await getEmailContent();
-    const response = await generateResponse(subject, emailBody);
+    const { subject, emailBody, senderName, recipientName } = await getEmailDetails();
+
+    const response = await generateResponse(
+      `Subject: ${subject}\n\nEmail body:\n${emailBody}`,
+      senderName,
+      recipientName
+    );
+
     composeArea.innerHTML = formatResponse(response);
   } catch (error) {
     console.error('Error:', error);
@@ -46,10 +52,16 @@ async function getEmailContent() {
   try {
     const emailBody = document.querySelector('.a3s.aiL')?.innerText;
     const subject = document.querySelector('h2.hP')?.innerText;
-    if (!emailBody || !subject) throw new Error('Email content not found');
-    return { subject, emailBody };
+    const senderName = document.querySelector('.gD')?.textContent; // Sender's name
+    const recipientName = document.querySelector('.vT')?.textContent; // Your name or recipient
+
+    if (!emailBody || !subject || !senderName || !recipientName) {
+      throw new Error('Email details not found');
+    }
+
+    return { subject, emailBody, senderName, recipientName };
   } catch (error) {
-    console.error('Error getting email content:', error);
+    console.error('Error getting email details:', error);
     throw error;
   }
 }
@@ -68,8 +80,10 @@ function formatResponse(response) {
 }
 
 async function generateResponse(subject, emailBody) {
-  const apiKey = await chrome.storage.sync.get(['claudeApiKey']);
-  if (!apiKey.claudeApiKey) throw new Error('API key not found');
+  const { claudeApiKey } = await chrome.storage.sync.get(['claudeApiKey']);
+  if (!claudeApiKey) {
+    throw new Error('Claude API key not configured. Please set it in extension settings.');
+  }
 
   const response = await fetch('http://localhost:3000/api/generate', {
     method: 'POST',
@@ -79,8 +93,13 @@ async function generateResponse(subject, emailBody) {
     })
   });
 
-  if (!response.ok) throw new Error('Failed to generate response');
+  if (!response.ok) {
+    console.error('API Response:', await response.text());
+    throw new Error('Failed to generate response');
+  }
+  
   const data = await response.json();
+  if (!data.content || !data.content[0]) throw new Error('Unexpected API response structure');
   return data.content[0].text;
 }
 
@@ -94,8 +113,11 @@ function debounce(func, wait) {
 }
 
 const observer = new MutationObserver(debounce(() => {
-  if (!buttonInjected) injectReplyButton();
+  injectReplyButton();
 }, 250));
+
+observer.observe(document.body, { childList: true, subtree: true });
+
 
 // Check for button injection every 2 seconds until successful
 const checkInterval = setInterval(() => {
