@@ -12,7 +12,7 @@ function injectReplyButton() {
          style="background: #1a73e8; color: white; margin-right: 8px;">
       Claude Assistant
     </div>`;
-  
+
   assistButton.onclick = handleClick;
   replyContainer.prepend(assistButton);
   buttonInjected = true;
@@ -24,22 +24,18 @@ async function handleClick() {
     // Find compose area after clicking reply
     const replyButton = document.querySelector('div[role="button"][data-tooltip="Reply"]');
     replyButton.click();
-    
+
     // Wait for compose area to appear
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const composeArea = document.querySelector('div[role="textbox"][aria-label="Message Body"]');
     if (!composeArea) {
       throw new Error('Could not find compose area');
     }
 
-    const { subject, emailBody, senderName, recipientName } = await getEmailDetails();
+    const { subject, emailBody, senderName, recipientName } = await getEmailContent();
 
-    const response = await generateResponse(
-      `Subject: ${subject}\n\nEmail body:\n${emailBody}`,
-      senderName,
-      recipientName
-    );
+    const response = await generateResponse(emailBody, senderName, recipientName);
 
     composeArea.innerHTML = formatResponse(response);
   } catch (error) {
@@ -80,27 +76,42 @@ function formatResponse(response) {
 }
 
 async function generateResponse(subject, emailBody) {
-  const { claudeApiKey } = await chrome.storage.sync.get(['claudeApiKey']);
-  if (!claudeApiKey) {
-    throw new Error('Claude API key not configured. Please set it in extension settings.');
-  }
+  try {
+    const storage = await chrome.storage.sync.get(['claudeApiKey']).catch(err => {
+      if (err.message.includes('Extension context invalidated')) {
+        showError('Extension needs to be reloaded. Please refresh the page.');
+        return {};
+      }
+      throw err;
+    });
 
-  const response = await fetch('http://localhost:3000/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      emailContent: `Subject: ${subject}\n\nEmail body:\n${emailBody}`
-    })
-  });
+    const { claudeApiKey } = storage;
+    if (!claudeApiKey) {
+      throw new Error('Claude API key not configured. Please set it in extension settings.');
+    }
 
-  if (!response.ok) {
-    console.error('API Response:', await response.text());
-    throw new Error('Failed to generate response');
+    const response = await fetch('http://localhost:3000/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emailContent: emailBody,
+        senderName,
+        recipientName
+      })
+    });
+
+    if (!response.ok) {
+      console.error('API Response:', await response.text());
+      throw new Error('Failed to generate response');
+    }
+
+    const data = await response.json();
+    if (!data.content || !data.content[0]) throw new Error('Unexpected API response structure');
+    return data.content[0].text;
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
   }
-  
-  const data = await response.json();
-  if (!data.content || !data.content[0]) throw new Error('Unexpected API response structure');
-  return data.content[0].text;
 }
 
 // Optimized observer with debouncing
