@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      width: 300px;
+      padding: 16px;
+      font-family: -apple-system, system-ui, BlinkMacSystemFont;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1557b0;
+    }
+    .status {
+      color: #1a73e8;
+      font-size: 14px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>Gmail Assistant Settings</h3>
+    <label>Claude API Key</label>
+    <input type="password" id="apiKey" placeholder="Enter your API key">
+    <button id="saveSettings">Save Settings</button>
+    <div id="status" class="status">Settings saved!</div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
