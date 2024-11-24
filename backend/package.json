@@ -1,9 +1,17 @@
 {
-    "name": "claude-email-assistant-api",
+    "name": "gmail-assistant-api-backend",
     "version": "1.0.0",
     "private": true,
-    "type": "module",
+    "scripts": {
+        "dev": "vercel dev",
+        "deploy": "vercel deploy",
+        "start": "vercel dev"
+    },
     "dependencies": {
-      "@anthropic-ai/sdk": "^0.18.0"
+        "@anthropic-ai/sdk": "^0.18.0",
+        "lru-cache": "^7.14.1"
+    },
+    "devDependencies": {
+        "vercel": "^32.0.0"
     }
-  }
+}

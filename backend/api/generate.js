@@ -1,59 +1,31 @@
-import { Anthropic } from '@anthropic-ai/sdk';
+import { rateLimit } from '../middleware/rateLimit';
+import { anthropic } from '../lib/anthropic';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
-});
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-export default async function handler(req) {
-  // Handle OPTIONS request for CORS
+  // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
-  }
-
-  // Handle GET request for root path
-  if (req.method === 'GET') {
-    return new Response(JSON.stringify({ status: 'API is running' }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { emailContent, senderName, recipientName } = await req.json();
+    await rateLimit(req, res);
+    const { emailContent, senderName, recipientName } = req.body;
 
     if (!emailContent || !senderName || !recipientName) {
-      return new Response(
-        JSON.stringify({
-          error: 'emailContent, senderName, and recipientName are required',
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        }
-      );
+      return res.status(400).json({
+        error: 'emailContent, senderName, and recipientName are required',
+      });
     }
 
     const msg = await anthropic.messages.create({
@@ -85,27 +57,9 @@ export default async function handler(req) {
       ],
     });
 
-    return new Response(
-      JSON.stringify({ generatedResponse: msg.content[0].text }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    return res.status(200).json({ generatedResponse: msg.content[0].text });
   } catch (error) {
     console.error('API error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }
