@@ -35,18 +35,23 @@ const anthropic = new Anthropic({
 });
 
 app.get('/', (req, res) => {
-    res.send('Gmail Assistant API is running');
+    res.send('Claude Email Assistant is running');
 });
 
 app.post('/api/generate', async (req, res) => {
     try {
-        const { emailContent, senderName, recipientName } = req.body;
+        const { emailContent, senderName, recipientName, userPrompt } = req.body;
 
         if (!emailContent || !senderName || !recipientName) {
             return res.status(400).json({
                 error: 'emailContent, senderName, and recipientName are required',
             });
         }
+
+        // Prepare the system message with user's prompt
+        const systemPrompt = userPrompt ? 
+            `You are tasked with drafting a professional email response following these specific instructions: "${userPrompt}".` :
+            'You are tasked with drafting a professional email response.';
 
         // Prepare the message
         const msg = await anthropic.messages.create({
@@ -84,6 +89,11 @@ app.post('/api/generate', async (req, res) => {
                 },
             ],
         });
+
+        // Extract the response from the XML-like tags
+        const response = msg.content[0].text;
+        const emailResponseMatch = response.match(/<emailResponse>([\s\S]*)<\/emailResponse>/);
+        const generatedResponse = emailResponseMatch ? emailResponseMatch[1].trim() : response;
 
         // Send response back to client
         res.json({ generatedResponse: msg.content[0].text });
