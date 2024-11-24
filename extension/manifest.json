@@ -1,15 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Claude Email Assistant",
+  "name": "Gmail Assistant",
   "version": "1.0",
-  "description": "Gmail integration with Claude for intelligent email responses",
+  "description": "Gmail integration with Claude",
   "permissions": [
     "identity",
-    "storage",
-    "activeTab"
+    "storage"
   ],
   "oauth2": {
-    "client_id": "471041875528-iemgthbpsegn31oet9p0sqeisf3u2nd2.apps.googleusercontent.com",
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/gmail.modify"
     ]
@@ -17,15 +16,13 @@
   "content_scripts": [{
     "matches": ["https://mail.google.com/*"],
     "js": ["content.js"]
+
   }],
   "host_permissions": [
     "https://mail.google.com/*",
-    "https://claude-email-assistant.vercel.app/*"
+    "http://localhost:3000/*"
   ],
   "action": {
     "default_popup": "popup.html"
-  },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }

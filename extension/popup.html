@@ -1,46 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Claude Email Assistant</title>
   <style>
     body {
-      width: 320px;
-      padding: 15px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      width: 300px;
+      padding: 16px;
+      font-family: -apple-system, system-ui, BlinkMacSystemFont;
     }
     .container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
     button {
-      background-color: #0070f3;
+      background: #1a73e8;
       color: white;
       border: none;
       padding: 8px 16px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 14px;
     }
     button:hover {
-      background-color: #0051cc;
-    }
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
+      background: #1557b0;
     }
     .status {
-      color: #666;
+      color: #1a73e8;
       font-size: 14px;
-      margin-top: 10px;
+      display: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Claude Email Assistant</h2>
-    <button id="generateResponse">Generate Response</button>
-    <div id="status" class="status"></div>
+    <h3>Claude Email Assistant Settings</h3>
+    <label>Claude API Key</label>
+    <input type="password" id="apiKey" placeholder="Enter your API key">
+    <button id="saveSettings">Save Settings</button>
+    <div id="status" class="status">Settings saved!</div>
   </div>
   <script src="popup.js"></script>
 </body>
