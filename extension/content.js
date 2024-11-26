@@ -18,6 +18,45 @@ function injectReplyButton() {
   console.log('Button injected successfully');
 }
 
+function createPromptOverlay() {
+  const overlay = document.createElement('div');
+  overlay.className = 'claude-prompt-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  `;
+
+  const promptBox = document.createElement('div');
+  promptBox.style.cssText = `
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  `;
+
+  promptBox.innerHTML = `
+    <h3 style="margin: 0 0 15px 0;">Quick Instructions for Claude</h3>
+    <textarea id="claude-prompt" style="width: 100%; height: 100px; margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" 
+      placeholder="Enter your brief instructions for the email response (e.g., 'Polite decline to the meeting invitation' or 'Accept and ask to move it to next week')"></textarea>
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button id="claude-cancel" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: #f1f3f4;">Cancel</button>
+      <button id="claude-generate" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: #1a73e8; color: white;">Generate Response</button>
+    </div>
+  `;
+
+  overlay.appendChild(promptBox);
+  return overlay;
+}
+
 async function getEmailContent() {
   try {
     // Find the active email container
@@ -75,29 +114,57 @@ async function getEmailContent() {
 
 async function handleClick() {
   try {
-    // Find compose area after clicking reply
-    const replyButton = document.querySelector('div[role="button"][data-tooltip="Reply"]');
-    replyButton.click();
+    // Create and show the prompt overlay
+    const overlay = createPromptOverlay();
+    document.body.appendChild(overlay);
 
-    // Wait for compose area to appear
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Set up event listeners
+    const cancelButton = document.getElementById('claude-cancel');
+    const generateButton = document.getElementById('claude-generate');
+    const promptInput = document.getElementById('claude-prompt');
 
-    const composeArea = document.querySelector('div[role="textbox"][aria-label^="Message Body"]');
-    if (!composeArea) {
-      throw new Error('Could not find compose area');
-    }
+    cancelButton.onclick = () => {
+      document.body.removeChild(overlay);
+    };
 
-    const { subject, emailBody, senderName, recipientName } = await getEmailContent();
+    generateButton.onclick = async () => {
+      const userPrompt = promptInput.value.trim();
+      if (!userPrompt) {
+        alert('Please enter instructions for the response');
+        return;
+      }
 
-    const response = await generateResponse(emailBody, senderName, recipientName);
-    composeArea.innerHTML = formatResponse(response);
+      // Remove overlay
+      document.body.removeChild(overlay);
+
+      // Find compose area after clicking reply
+      const replyButton = document.querySelector('div[role="button"][data-tooltip="Reply"]');
+      replyButton.click();
+
+      // Wait for compose area to appear
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const composeArea = document.querySelector('div[role="textbox"][aria-label^="Message Body"]');
+      if (!composeArea) {
+        throw new Error('Could not find compose area');
+      }
+
+      // Show loading indicator
+      composeArea.innerHTML = '<div style="color: #666;">Generating response...</div>';
+
+      const { subject, emailBody, senderName, recipientName } = await getEmailContent();
+
+      const response = await generateResponse(emailBody, senderName, recipientName, userPrompt);
+      composeArea.innerHTML = formatResponse(response);
+    };
+
   } catch (error) {
     console.error('Error:', error);
     showError(error.message || 'Failed to generate response');
   }
 }
 
-async function generateResponse(emailBody, senderName, recipientName) {
+async function generateResponse(emailBody, senderName, recipientName, userPrompt) {
   try {
     const storage = await chrome.storage.sync.get(['claudeApiKey']);
     if (!storage.claudeApiKey) {
@@ -113,7 +180,8 @@ async function generateResponse(emailBody, senderName, recipientName) {
       body: JSON.stringify({
         emailContent: emailBody,
         senderName,
-        recipientName
+        recipientName,
+        userPrompt
       })
     });
 
