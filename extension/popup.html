@@ -3,47 +3,93 @@
 <head>
   <style>
     body {
-      width: 300px;
+      width: 320px;
       padding: 16px;
-      font-family: -apple-system, system-ui, BlinkMacSystemFont;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      background: #f8f9fa;
     }
+
     .container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    input {
+
+    h1 {
+      font-size: 18px;
+      color: #1a73e8;
+      margin: 0 0 16px 0;
+      font-weight: 600;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #5f6368;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="password"] {
       width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border: 1px solid #dadce0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
     }
+
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+    }
+
     button {
       background: #1a73e8;
       color: white;
       border: none;
       padding: 8px 16px;
-      border-radius: 4px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
+      transition: background-color 0.2s;
+      width: 100%;
     }
+
     button:hover {
       background: #1557b0;
     }
+
     .status {
-      color: #1a73e8;
-      font-size: 14px;
       display: none;
+      background: #e6f4ea;
+      color: #1e8e3e;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h3>Claude Email Assistant Settings</h3>
-    <label>Claude API Key</label>
-    <input type="password" id="apiKey" placeholder="Enter your API key">
+    <h1>Claude Email Assistant</h1>
+    <div class="input-group">
+      <label for="apiKey">Claude API Key</label>
+      <input type="password" id="apiKey" placeholder="Enter your API key" />
+    </div>
     <button id="saveSettings">Save Settings</button>
     <div id="status" class="status">Settings saved!</div>
   </div>
   <script src="popup.js"></script>
 </body>
-</html>
+</html>`;
